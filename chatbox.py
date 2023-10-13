@@ -54,10 +54,39 @@ class TeacherAssistant(ctk.CTk):
 
     def placeTextOnFrame(self, input):
         print(input)
+        
+        # Assuming self is a tkinter window or frame
         userInputFrame = ctk.CTkFrame(self.chatBoxFrame)
+        userInputFrame.pack(side='top', anchor='e')
+
+        userInput = ctk.StringVar()
+        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=200, height=10)
+        userInputTextBox.pack(anchor='center')
+
+        # Set the text in the Entry widget to the input variable
+        userInput.set(input)
+        userInputTextBox.configure(state='disabled')
+
+
+
+    def placeAiTextOnFrame(self, aiText):
+        aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
+        aiInputFrame.pack(side='top', anchor='w')
+
+        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=200, height=150)
+        aiInputTextBox.pack(anchor='center')
+
+
 
     def getAiAnswer(self, userInput):
         print("Getting API Answer for: ", userInput)
+
+        #---------------------------------------------------
+        # Here will be the FastApi Configuration for ChatGPT
+        #---------------------------------------------------
+
+        aiAnswer = 'Hello! this is the chatbot speaking...'
+        self.placeAiTextOnFrame(aiAnswer)
 
 if __name__ == "__main__":
     root = TeacherAssistant()

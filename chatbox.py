@@ -49,6 +49,9 @@ class TeacherAssistant(ctk.CTk):
         # Method used to place text on screen for user
         self.placeTextOnFrame(userInput)
 
+        # Automatically Scroll to keep up with text
+        #self.chatBoxFrame.
+
         # Method used to get AI Answer from user prompt
         self.getAiAnswer(userInput)
 
@@ -63,16 +66,26 @@ class TeacherAssistant(ctk.CTk):
         userInputFrame.pack(side='top', anchor='e')
 
         userInput = ctk.StringVar()
-        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=350, height=100)
-        userInputTextBox.pack(anchor='center')
+        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=900, height=100)
+        userInputTextBox.pack(anchor='center', pady=5)
 
         # Set the text in the Entry widget to the input variable
         userInput.set(input)
         userInputTextBox.configure(state='disabled')
-        
+    
+    def split_text(self, text, chunk_size):
+        return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
+
+    def format_text(self, text):
+        chunk_size = 50
+        chunks = self.split_text(text, chunk_size)
+        return '\n'.join(chunks)
 
     def placeAiTextOnFrame(self, aiText):
+        
+        
+
         print(aiText)
         
         # 
@@ -80,11 +93,14 @@ class TeacherAssistant(ctk.CTk):
         aiInputFrame.pack(side='top', anchor='w')
 
         aiInput = ctk.StringVar()
-        aiInputTextBox = ctk.CTkEntry(aiInputFrame, textvariable=aiInput, width=350, height=100)
-        aiInputTextBox.pack(anchor='center')
+        aiInputTextBox = ctk.CTkEntry(aiInputFrame, textvariable=aiInput, width=900, height=100)
+        aiInputTextBox.pack(anchor='center', pady=5)
 
+        # Format Ai Text
+        formatted_text = self.format_text(aiText)
+        
         # Set the text in the Entry widget to the input variable
-        aiInput.set(aiText)
+        aiInput.set(formatted_text)
         aiInputTextBox.configure(state='disabled')
 
 

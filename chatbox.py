@@ -56,7 +56,9 @@ class TeacherAssistant(ctk.CTk):
         #Placeholder for future code
 
         # Method used to get AI Answer from user prompt
-        self.getAiAnswer(userInput)
+        
+        thread = threading.Thread(target=lambda:self.getAiAnswer(userInput))
+        thread.start()
 
     def set_theme(self, theme):
         ctk.set_appearance_mode(theme)
@@ -67,17 +69,16 @@ class TeacherAssistant(ctk.CTk):
         # 
         userInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         userInputFrame.pack(side='top', anchor='e')
-
-        userInput = ctk.StringVar()
-        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=900, height=100)
+        
+        userInputTextBox = ctk.CTkTextbox(userInputFrame, width=900, height=100)
         userInputTextBox.pack(anchor='center', pady=5)
 
         # Set the text in the Entry widget to the input variable
-        userInput.set(input)
+        userInputTextBox.insert(ctk.END, f"{input}")
         userInputTextBox.configure(state='disabled')
 
     def getAiAnswer(self, userInput):
-        openai.api_key = "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"
+        openai.api_key = "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"
         self.messages = []
         system_msg = """You are a helpful assistant to a teacher at any given school. 
                         Your goal is to assist the teacher in any way possible to help that person
@@ -91,9 +92,10 @@ class TeacherAssistant(ctk.CTk):
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         aiInputFrame.pack(side='top', anchor='w')
 
+        
         aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
         aiInputTextBox.pack(anchor='center', pady=5)   
-        stop_dots = False
+        
         
         while True:
             userMessage = userInput
@@ -103,25 +105,26 @@ class TeacherAssistant(ctk.CTk):
             self.messages.append({"role": "user", "content": userMessage})
             
             # Start the dot animation on a separate thread
-            stop_dots = False
+            self.stop_dots = False
             thread = threading.Thread(target=lambda:self.print_thinking_dots(aiInputTextBox))
             thread.start()
             
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.messages)
             reply = response["choices"][0]["message"]["content"]
-
-            stop_dots = True
-            thread.join()           
+            
+            self.stop_dots = True 
+            thread.join()
+                    
             
             # Print reply word by word
             print("Assistant:", end=' ')
             i = 0
             for word in reply.split():
                 i += 1
-                aiInputTextBox.set(word + ' ')
+                aiInputTextBox.insert(ctk.END, f"{word} ")
                 print(word + ' ', end='')
                 if i == 40:
-                    aiInputTextBox.set('\n')
+                    aiInputTextBox.insert(ctk.END, "\n")
                     i = 0 
                 time.sleep(0.1)  # Reducing the delay for faster output
                 
@@ -134,14 +137,14 @@ class TeacherAssistant(ctk.CTk):
         count = 1
         message = ""
         while not self.stop_dots:
-            message += '.' * count
-            textbox.set(message)  # Update the CTkTextbox with the message
+            message += '. ' * count
+            textbox.insert(ctk.END, f"{message}")  # Update the CTkTextbox with the message
             time.sleep(0.5)
             count = (count % 3) + 1
-            message += '\r' + ' ' * 3
-            textbox.set(message)  # Update the CTkTextbox with the message
-            message += '\r'
-            textbox.set(message)  # Update the CTkTextbox with the message
+            textbox.delete("0.0", "end") # Insert a newline character to reset the line
+            message = ""
+            
+            
     
 if __name__ == "__main__":
     root = TeacherAssistant()

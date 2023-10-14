@@ -2,9 +2,12 @@ import threading
 import openai
 import time
 import sys
-openai.api_key = "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"
 
 
+# api key to access the OpenAI API
+openai.api_key = "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"
+
+# store list of user messages, first one being the "programming" prompt
 messages = []
 system_msg = """You are a helpful assistant to a teacher at any given school. 
                 Your goal is to assist the teacher in any way possible to help that person
@@ -12,9 +15,10 @@ system_msg = """You are a helpful assistant to a teacher at any given school.
 
 messages.append({"role": "system", "content": system_msg})
 
-
+# A flag to control the display of dots
 stop_dots = False  # A flag to control the display of dots
 
+# A function to print dots as an animation while waiting for bot message
 def print_thinking_dots():
     count = 1
     while not stop_dots:
@@ -24,12 +28,16 @@ def print_thinking_dots():
         print('\r' + ' ' * 3, end='', flush=True)  # Reset line
         print('\r', end='', flush=True)
 
+# display the welcome message
 print("Teacher assistant is ready!")
+
+# Start the bot
 while True:
-    userMessage = input("You: ")
+    userMessage = input("You: ") # <-- User input variable 
     if userMessage == "quit()":
         break
 
+    
     messages.append({"role": "user", "content": userMessage})
     
      # Start the dot animation on a separate thread

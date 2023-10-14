@@ -130,14 +130,53 @@ class TeacherAssistant(ctk.CTk):
         else:
             raise ValueError("Unsupported file type: {}".format(file_extension))
     
+    def read_folder_content(self, folder_path):
+        texts = []
+
+        files = ([f for f in os.listdir(folder_path) if f.endswith(".pdf") or f.endswith(".PDF")
+                or f.endswith(".docx") or f.endswith(".DOCX") or f.endswith(".txt")])
+
+
+        for filename in files:
+            file_path = os.path.join(folder_path, filename)
+            file_extension = os.path.splitext(filename)[1].lower()
+
+            # Extract content from Word document
+            if file_extension == '.docx':
+                doc = Document(file_path)
+                fullText = []
+                for para in doc.paragraphs:
+                    fullText.append(para.text)
+                texts.append('\n'.join(fullText))
+
+            # Extract content from PDF
+            elif file_extension == '.pdf':
+                with open(file_path, 'rb') as file:
+                    reader = PyPDF2.PdfReader(file)
+                    text = ""
+                    for page_num in range(len(reader.pages)):
+                        page = reader.pages[page_num]
+                        text += page.extract_text()
+                texts.append(text)
+
+            # Extract content from a plain text file
+            elif file_extension == '.txt':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    texts.append(f.read())
+
+            else:
+                print(f"Unsupported file type: {file_extension} in file {filename}. Skipping...")
+
+        return "\n\n".join(texts)  # Separate content of different files with two newline characters
+    
     def getAiAnswer(self):
         openai.api_key = "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"
         self.messages = []
         
         cwd = os.getcwd()
         
-        trainingFolder = os.path.join(cwd, 'TestMaterial\\cop1000.pdf')
-        file_content = self.read_file_content(trainingFolder)
+        trainingFolder = os.path.join(cwd, 'TestMaterial')
+        file_content = self.read_folder_content(trainingFolder)
         
         # System prompt to Convince Ai it is the teachers assistant
         system_msg = """

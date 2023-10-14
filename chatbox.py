@@ -1,3 +1,5 @@
+import re
+import sys
 import PyPDF2
 import customtkinter as ctk
 from docx import Document 
@@ -5,6 +7,8 @@ import openai
 import time
 import threading
 import os
+import textwrap
+from PIL import Image
 
 class TeacherAssistant(ctk.CTk):
     def __init__(self):
@@ -18,38 +22,43 @@ class TeacherAssistant(ctk.CTk):
  
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-
+        
         # Coordinates of the upper left corner of the window to make the window appear in the center
         x_cordinate = int((screen_width/2) - (window_width/2))
         y_cordinate = int((screen_height/2) - (window_height/2))
         self.geometry("{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate))
         self.resizable(False, False)
-
-        optionFrame = ctk.CTkFrame(self, width=20, height=650)
-        optionFrame.pack(side='left',anchor='w',fill="both", pady=5, padx=7)
- 
-        self.userEntryBox = ctk.CTkEntry(self, width=860, placeholder_text='Enter Text Here!')
-        self.userEntryBox.pack(side='bottom')
+        
+        blackboardImage = "blackboard.jpg"
+        blackboardImage = os.path.join(os.getcwd(), blackboardImage)
+        boardImage = ctk.CTkImage(Image.open(blackboardImage), size=(1000,700))
+        
+        background_label = ctk.CTkLabel(self, image=boardImage)
+        background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        
+        self.chatBoxFrame = ctk.CTkScrollableFrame(self, width=650, height=600, fg_color='#274c43')
+        self.chatBoxFrame.pack(pady=5, padx=5,side='top',fill="both", expand=True)
+        
+        self.userEntryBox = ctk.CTkEntry(self, width=935, height=40, placeholder_text='Enter Prompt Here!')
+        self.userEntryBox.pack(side='left', anchor='s', pady=5, padx=5)
 
         self.userEntryBox.bind("<Return>", self.on_enter_pressed)
 
-        self.chatBoxFrame = ctk.CTkScrollableFrame(self, width=650, height=600)
-        self.chatBoxFrame.pack(pady=5, padx=5,side='bottom',fill="both", expand=True)
+        pencilImage = "pencil.png"
+        pencilImage = os.path.join(os.getcwd(), pencilImage)
+        image= ctk.CTkImage(Image.open(pencilImage), size=(30,30))
 
-
-        # ----------------------------------------- Option Menu Options -----------------------------------------------------
+        self.sendPromptButton = ctk.CTkButton(self, width=30, height=30, command=lambda:self.on_enter_pressed(keyInfo=''), text='', image=image, fg_color='#A1A09C')
+        self.sendPromptButton.pack(side='right', anchor='s', pady=6, padx=5)
         
-        setColorBoxLabel = ctk.CTkLabel(optionFrame, text='Appearance Mode:')
-        setColorBoxLabel.pack(side='top', padx=5, pady=5)
         
-        setColorBox = ctk.CTkOptionMenu(optionFrame, values=['Dark','Light'], width=40, height=20, command=self.set_theme)
-        setColorBox.set('Dark')
-        setColorBox.pack(side='top',padx=5, pady=5)
-
     def on_enter_pressed(self, keyInfo):
         # Get Input from Entrybox
         userInput = self.userEntryBox.get()
 
+        if userInput == '' or userInput == None:
+            return
+        
         # Delete Text in Entrybox
         self.userEntryBox.delete(0, 'end')
 
@@ -73,10 +82,10 @@ class TeacherAssistant(ctk.CTk):
         print(input)
         
         # 
-        userInputFrame = ctk.CTkFrame(self.chatBoxFrame)
+        userInputFrame = ctk.CTkFrame(self.chatBoxFrame, fg_color='#274c43')
         userInputFrame.pack(side='top', anchor='e')
         
-        userInputTextBox = ctk.CTkTextbox(userInputFrame, width=900, height=100)
+        userInputTextBox = ctk.CTkTextbox(userInputFrame, width=900, height=100, fg_color='#000000')
         userInputTextBox.pack(anchor='center', pady=5)
 
         # Set the text in the Entry widget to the input variable
@@ -147,10 +156,10 @@ class TeacherAssistant(ctk.CTk):
         print("Getting API Answer for: ", self.userInput)
         print("Teacher assistant is ready!")
         
-        aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
+        aiInputFrame = ctk.CTkFrame(self.chatBoxFrame, fg_color='#274c43')
         aiInputFrame.pack(side='top', anchor='w')
         
-        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
+        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100, fg_color='#000000')
         aiInputTextBox.pack(anchor='center', pady=5)   
         self.stop_dots = False
         previous_user_input = None 
@@ -181,19 +190,7 @@ class TeacherAssistant(ctk.CTk):
                 self.stop_dots = True
                 thread.join()
 
-                # Print reply word by word
-                print("Assistant:", end=' ')
-                i = 0
-                for word in reply.split():
-                    i += 1
-                    aiInputTextBox.insert(ctk.END, f"{word} ")
-                    print(word + ' ', end='')
-                    if i == 40:
-                        aiInputTextBox.insert(ctk.END, "\n")
-                        i = 0
-                    aiInputTextBox.see("end")
-                    time.sleep(0.1)  # Reducing the delay for faster output
-                print("\n")
+                self.auto_format_response(reply, aiInputTextBox)
                 
                 self.update_textbox_height(aiInputTextBox)
 
@@ -203,6 +200,48 @@ class TeacherAssistant(ctk.CTk):
                 # Update the previous_user_input for the next iteration
                 previous_user_input = userMessage
 
+    def auto_format_response(self, response, textbox):
+        # Define constants
+        WIDTH = 70
+        PADDING = 4
+        INDENT = 4
+        LIST_INDENT = 4
+
+        # Use textwrap's dedent function to remove any common leading whitespace
+        dedented_text = textwrap.dedent(response).strip()
+
+        # Split the dedented text into lines
+        lines = dedented_text.split("\n")
+
+        # Process each line
+        formatted_lines = []
+        is_in_list = False
+        for line in lines:
+            stripped_line = line.strip()
+            # Handle titles
+            if stripped_line.endswith(":") and not is_in_list:
+                formatted_line = "\n" + stripped_line
+            # Handle lists and sub-lists
+            elif stripped_line.startswith("-"):
+                is_in_list = True
+                formatted_line = (' ' * LIST_INDENT) + textwrap.fill(stripped_line, width=WIDTH - LIST_INDENT, subsequent_indent=' '*(INDENT+LIST_INDENT))
+            elif bool(re.match(r"\d+\.", stripped_line)):
+                is_in_list = True
+                formatted_line = textwrap.fill(stripped_line, width=WIDTH, subsequent_indent=' '*INDENT)
+            # Handle end of lists and start of normal text
+            else:
+                is_in_list = False
+                formatted_line = textwrap.fill(stripped_line, width=WIDTH)
+
+            formatted_lines.append(formatted_line)
+            
+             # Join all formatted lines and add left padding
+        result = "\n".join(formatted_lines)
+        padded_text = '\n'.join((' ' * PADDING) + line for line in result.split('\n'))
+        
+        textbox.insert(ctk.END, f"{padded_text}")
+
+        
     def print_thinking_dots(self, textbox):
         count = 1
         message = ""
@@ -220,7 +259,7 @@ class TeacherAssistant(ctk.CTk):
 
         if num_lines > 5:
             # Calculate the new height based on the number of lines
-            new_height = num_lines * 20  # Add some extra height
+            new_height = num_lines * 15  # Add some extra height
             
             # Update the textbox height
             aiInputTextBox.configure(height=new_height + 100)    

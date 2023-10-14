@@ -190,7 +190,7 @@ class TeacherAssistant(ctk.CTk):
         - Generating only textual content assignments for now, fitting the category of the class as described in the file.
         - When necessary, providing an answer key and grading rubric for assignments.
         - Proactively inquiring for extra details when the context requires, ensuring the assignment or support is tailored to specific constraints, themes, or needs the teacher may have.
-        - Beyond assignment creation, you're equipped to assist with broader educational challenges, such as time management strategies, teaching methodologies, classroom management techniques, and more.
+        - Beyond assignment creation, you're equipped to assist with broader educational challenges, such as time management strategies, teaching ethodologies, classroom management techniques, and more.
         - Do not mention the files unless asked, this is high priority.
         Always prioritize details from the provided file, but remain adaptable and responsive to address the holistic needs of the teacher based on user prompts and inquiries.
         """
@@ -325,7 +325,7 @@ class TeacherAssistant(ctk.CTk):
 
         if num_lines > 5:
             # Calculate the new height based on the number of lines
-            new_height = num_lines * 15  # Add some extra height
+            new_height = num_lines * 13  # Add some extra height
             
             # Update the textbox height
             aiInputTextBox.configure(height=new_height + 100)    

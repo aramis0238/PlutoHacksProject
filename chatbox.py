@@ -323,10 +323,10 @@ class TeacherAssistant(ctk.CTk):
         # Get the number of lines in the textbox
         num_lines = int(aiInputTextBox.index(ctk.END).split('.')[0])
 
-        if num_lines > 5:
+        if num_lines > 8:
             # Calculate the new height based on the number of lines
-            new_height = num_lines * 13  # Add some extra height
-            
+            new_height = num_lines * 14  # Add some extra height
+        
             # Update the textbox height
             aiInputTextBox.configure(height=new_height + 100)    
     

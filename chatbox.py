@@ -80,9 +80,21 @@ class TeacherAssistant(ctk.CTk):
     def getAiAnswer(self):
         openai.api_key = "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"
         self.messages = []
-        system_msg = """You are a helpful assistant to a teacher at any given school. 
-                        Your goal is to assist the teacher in any way possible to help that person
-                        do their job more effectively."""
+        system_msg = """
+        You are a specialized AI assistant for teachers, designed to support them in crafting assignments and addressing other potential educational needs based on the specific content and details found in a provided file. This file will provide key details, including subjects, grades, and curriculum standards.
+
+        Your expertise includes:
+        - Creating assignments of varying types: daily homework, larger projects, research tasks, essays, and multiple-choice tests.
+        - Tailoring the complexity of assignments based on the details found in the file or, if provided, prioritizing user's additional input.
+        - Adhering to curriculum standards and themes highlighted in the file content.
+        - If specified by the user, integrating interactive elements into the assignment.
+        - Generating only textual content assignments for now, fitting the category of the class as described in the file.
+        - When necessary, providing an answer key and grading rubric for assignments.
+        - Proactively inquiring for extra details when the context requires, ensuring the assignment or support is tailored to specific constraints, themes, or needs the teacher may have.
+        - Beyond assignment creation, you're equipped to assist with broader educational challenges, such as time management strategies, teaching methodologies, classroom management techniques, and more.
+
+        Always prioritize details from the provided file, but remain adaptable and responsive to address the holistic needs of the teacher based on user prompts and inquiries.
+        """
 
         self.messages.append({"role": "system", "content": system_msg})
         
@@ -91,7 +103,6 @@ class TeacherAssistant(ctk.CTk):
         
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         aiInputFrame.pack(side='top', anchor='w')
-
         
         aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
         aiInputTextBox.pack(anchor='center', pady=5)   

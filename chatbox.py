@@ -51,13 +51,13 @@ class TeacherAssistant(ctk.CTk):
 
         # Method used to place text on screen for user
         self.placeTextOnFrame(userInput)
-
+        self.userInput = userInput
         # Automatically Scroll to keep up with text
         #Placeholder for future code
 
         # Method used to get AI Answer from user prompt
         
-        thread = threading.Thread(target=lambda:self.getAiAnswer(userInput))
+        thread = threading.Thread(target=self.getAiAnswer)
         thread.start()
 
     def set_theme(self, theme):
@@ -77,7 +77,7 @@ class TeacherAssistant(ctk.CTk):
         userInputTextBox.insert(ctk.END, f"{input}")
         userInputTextBox.configure(state='disabled')
 
-    def getAiAnswer(self, userInput):
+    def getAiAnswer(self):
         openai.api_key = "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"
         self.messages = []
         system_msg = """You are a helpful assistant to a teacher at any given school. 
@@ -86,7 +86,7 @@ class TeacherAssistant(ctk.CTk):
 
         self.messages.append({"role": "system", "content": system_msg})
         
-        print("Getting API Answer for: ", userInput)
+        print("Getting API Answer for: ", self.userInput)
         print("Teacher assistant is ready!")
         
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
@@ -95,27 +95,35 @@ class TeacherAssistant(ctk.CTk):
         
         aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
         aiInputTextBox.pack(anchor='center', pady=5)   
-        
+        self.stop_dots = False
+        previous_user_input = None 
         
         while True:
-            userMessage = userInput
+            isSame = False
+            userMessage = self.userInput
+            
+            # Check if the current user input is the same as the previous one
+            if userMessage == previous_user_input:
+                isSame = True
+                while isSame:
+                    time.sleep(1)
+                    if self.userInput != previous_user_input:
+                       isSame = False 
+                
             if userMessage == "quit()":
                 break
 
             self.messages.append({"role": "user", "content": userMessage})
-            
-            # Start the dot animation on a separate thread
-            self.stop_dots = False
+
             thread = threading.Thread(target=lambda:self.print_thinking_dots(aiInputTextBox))
             thread.start()
-            
+
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.messages)
             reply = response["choices"][0]["message"]["content"]
-            
-            self.stop_dots = True 
+
+            self.stop_dots = True
             thread.join()
-                    
-            
+
             # Print reply word by word
             print("Assistant:", end=' ')
             i = 0
@@ -125,13 +133,16 @@ class TeacherAssistant(ctk.CTk):
                 print(word + ' ', end='')
                 if i == 40:
                     aiInputTextBox.insert(ctk.END, "\n")
-                    i = 0 
+                    i = 0
                 time.sleep(0.1)  # Reducing the delay for faster output
-                
+
             print("\n")
-            
+
             aiInputTextBox.configure(state='disabled')
             self.messages.append({"role": "assistant", "content": reply})
+
+            # Update the previous_user_input for the next iteration
+            previous_user_input = userMessage
 
     def print_thinking_dots(self, textbox):
         count = 1

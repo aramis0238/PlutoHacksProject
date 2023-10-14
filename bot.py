@@ -1,3 +1,5 @@
+import re
+import textwrap
 import threading
 import openai
 import time
@@ -5,6 +7,7 @@ import sys
 from docx import Document
 import PyPDF2
 import os
+
 
 # api key to access the OpenAI API
 openai.api_key = "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"
@@ -59,7 +62,7 @@ Your expertise includes:
 - When necessary, providing an answer key and grading rubric for assignments.
 - Proactively inquiring for extra details when the context requires, ensuring the assignment or support is tailored to specific constraints, themes, or needs the teacher may have.
 - Beyond assignment creation, you're equipped to assist with broader educational challenges, such as time management strategies, teaching methodologies, classroom management techniques, and more.
-
+- Do not mention the file unless asked, this is high priority.
 Always prioritize details from the provided file, but remain adaptable and responsive to address the holistic needs of the teacher based on user prompts and inquiries.
 """
 
@@ -74,10 +77,53 @@ def print_thinking_dots():
     count = 1
     while not stop_dots:
         print('.' * count, end='', flush=True)
-        time.sleep(0.5)
+        time.sleep(0.3)
         count = (count % 3) + 1
         print('\r' + ' ' * 3, end='', flush=True)  # Reset line
         print('\r', end='', flush=True)
+
+def auto_format_response(response):
+    # Define constants
+    WIDTH = 70
+    PADDING = 4
+    INDENT = 4
+    LIST_INDENT = 4
+
+    # Use textwrap's dedent function to remove any common leading whitespace
+    dedented_text = textwrap.dedent(response).strip()
+
+    # Split the dedented text into lines
+    lines = dedented_text.split("\n")
+
+    # Process each line
+    formatted_lines = []
+    is_in_list = False
+    for line in lines:
+        stripped_line = line.strip()
+        # Handle titles
+        if stripped_line.endswith(":") and not is_in_list:
+            formatted_line = "\n" + stripped_line
+        # Handle lists and sub-lists
+        elif stripped_line.startswith("-"):
+            is_in_list = True
+            formatted_line = (' ' * LIST_INDENT) + textwrap.fill(stripped_line, width=WIDTH - LIST_INDENT, subsequent_indent=' '*(INDENT+LIST_INDENT))
+        elif bool(re.match(r"\d+\.", stripped_line)):
+            is_in_list = True
+            formatted_line = textwrap.fill(stripped_line, width=WIDTH, subsequent_indent=' '*INDENT)
+        # Handle end of lists and start of normal text
+        else:
+            is_in_list = False
+            formatted_line = textwrap.fill(stripped_line, width=WIDTH)
+
+        formatted_lines.append(formatted_line)
+
+    # Join all formatted lines and add left padding
+    result = "\n".join(formatted_lines)
+    padded_text = '\n'.join((' ' * PADDING) + line for line in result.split('\n'))
+
+    print(padded_text)
+    
+    #print("\n" + '-'*80 + "\n")
 
 # display the welcome message
 print("Teacher assistant is ready!")
@@ -103,10 +149,11 @@ while True:
     thread.join()
     # Print reply word by word
     print("Assistant:", end=' ')
-    for word in reply.split():
-        print(word + ' ', end='')
-        time.sleep(0.1)  # Reducing the delay for faster output
-    print("\n")
+    # for word in reply.split():
+    #     print(word + ' ', end='')
+    #     time.sleep(0.1)  # Reducing the delay for faster output
+    # print("\n")
+    auto_format_response(reply)
 
     messages.append({"role": "assistant", "content": reply})
 

@@ -1,6 +1,7 @@
 import customtkinter as ctk 
-import fastapi
 import openai
+import time
+import threading
 
 class TeacherAssistant(ctk.CTk):
     def __init__(self):
@@ -32,13 +33,14 @@ class TeacherAssistant(ctk.CTk):
         self.chatBoxFrame = ctk.CTkScrollableFrame(self, width=650, height=600)
         self.chatBoxFrame.pack(pady=5, padx=5,side='bottom',fill="both", expand=True)
 
+
+        # ----------------------------------------- Option Menu Options -----------------------------------------------------
         setColorBox = ctk.CTkOptionMenu(optionFrame, values=['Dark','Light'], width=40, height=20, command=self.set_theme)
         setColorBox.set('Dark')
         setColorBox.pack(side='bottom',padx=5, pady=5)
 
         setColorBoxLabel = ctk.CTkLabel(optionFrame, text='Appearance Mode:')
         setColorBoxLabel.pack(side='bottom', padx=5, pady=5)
-
 
     def on_enter_pressed(self, junk):
         # Get Input from Entrybox
@@ -51,10 +53,12 @@ class TeacherAssistant(ctk.CTk):
         self.placeTextOnFrame(userInput)
 
         # Automatically Scroll to keep up with text
-        #self.chatBoxFrame.
+        #Placeholder for future code
 
         # Method used to get AI Answer from user prompt
-        self.getAiAnswer(userInput)
+        
+        thread = threading.Thread(target=lambda:self.getAiAnswer(userInput))
+        thread.start()
 
     def set_theme(self, theme):
         ctk.set_appearance_mode(theme)
@@ -65,56 +69,83 @@ class TeacherAssistant(ctk.CTk):
         # 
         userInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         userInputFrame.pack(side='top', anchor='e')
-
-        userInput = ctk.StringVar()
-        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=900, height=100)
+        
+        userInputTextBox = ctk.CTkTextbox(userInputFrame, width=900, height=100)
         userInputTextBox.pack(anchor='center', pady=5)
 
         # Set the text in the Entry widget to the input variable
-        userInput.set(input)
+        userInputTextBox.insert(ctk.END, f"{input}")
         userInputTextBox.configure(state='disabled')
-    
-    def split_text(self, text, chunk_size):
-        return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
+    def getAiAnswer(self, userInput):
+        openai.api_key = "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"
+        self.messages = []
+        system_msg = """You are a helpful assistant to a teacher at any given school. 
+                        Your goal is to assist the teacher in any way possible to help that person
+                        do their job more effectively."""
 
-    def format_text(self, text):
-        chunk_size = 50
-        chunks = self.split_text(text, chunk_size)
-        return '\n'.join(chunks)
-
-    def placeAiTextOnFrame(self, aiText):
+        self.messages.append({"role": "system", "content": system_msg})
         
+        print("Getting API Answer for: ", userInput)
+        print("Teacher assistant is ready!")
         
-
-        print(aiText)
-        
-        # 
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         aiInputFrame.pack(side='top', anchor='w')
 
-        aiInput = ctk.StringVar()
-        aiInputTextBox = ctk.CTkEntry(aiInputFrame, textvariable=aiInput, width=900, height=100)
-        aiInputTextBox.pack(anchor='center', pady=5)
-
-        # Format Ai Text
-        formatted_text = self.format_text(aiText)
         
-        # Set the text in the Entry widget to the input variable
-        aiInput.set(formatted_text)
-        aiInputTextBox.configure(state='disabled')
+        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
+        aiInputTextBox.pack(anchor='center', pady=5)   
+        
+        
+        while True:
+            userMessage = userInput
+            if userMessage == "quit()":
+                break
 
+            self.messages.append({"role": "user", "content": userMessage})
+            
+            # Start the dot animation on a separate thread
+            self.stop_dots = False
+            thread = threading.Thread(target=lambda:self.print_thinking_dots(aiInputTextBox))
+            thread.start()
+            
+            response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.messages)
+            reply = response["choices"][0]["message"]["content"]
+            
+            self.stop_dots = True 
+            thread.join()
+                    
+            
+            # Print reply word by word
+            print("Assistant:", end=' ')
+            i = 0
+            for word in reply.split():
+                i += 1
+                aiInputTextBox.insert(ctk.END, f"{word} ")
+                print(word + ' ', end='')
+                if i == 40:
+                    aiInputTextBox.insert(ctk.END, "\n")
+                    i = 0 
+                time.sleep(0.1)  # Reducing the delay for faster output
+                
+            print("\n")
+            
+            aiInputTextBox.configure(state='disabled')
+            self.messages.append({"role": "assistant", "content": reply})
 
-    def getAiAnswer(self, userInput):
-        print("Getting API Answer for: ", userInput)
-
-        #---------------------------------------------------
-        # Here will be the FastApi Configuration for ChatGPT
-        #---------------------------------------------------
-
-        aiAnswer = 'Hello! This is the chatbot speaking...'
-        self.placeAiTextOnFrame(aiAnswer)
-
+    def print_thinking_dots(self, textbox):
+        count = 1
+        message = ""
+        while not self.stop_dots:
+            message += '. ' * count
+            textbox.insert(ctk.END, f"{message}")  # Update the CTkTextbox with the message
+            time.sleep(0.5)
+            count = (count % 3) + 1
+            textbox.delete("0.0", "end") # Insert a newline character to reset the line
+            message = ""
+            
+            
+    
 if __name__ == "__main__":
     root = TeacherAssistant()
     root.mainloop()

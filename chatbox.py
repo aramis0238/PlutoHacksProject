@@ -1,7 +1,10 @@
-import customtkinter as ctk 
+import PyPDF2
+import customtkinter as ctk
+from docx import Document 
 import openai
 import time
 import threading
+import os
 
 class TeacherAssistant(ctk.CTk):
     def __init__(self):
@@ -35,14 +38,15 @@ class TeacherAssistant(ctk.CTk):
 
 
         # ----------------------------------------- Option Menu Options -----------------------------------------------------
+        
+        setColorBoxLabel = ctk.CTkLabel(optionFrame, text='Appearance Mode:')
+        setColorBoxLabel.pack(side='top', padx=5, pady=5)
+        
         setColorBox = ctk.CTkOptionMenu(optionFrame, values=['Dark','Light'], width=40, height=20, command=self.set_theme)
         setColorBox.set('Dark')
-        setColorBox.pack(side='bottom',padx=5, pady=5)
+        setColorBox.pack(side='top',padx=5, pady=5)
 
-        setColorBoxLabel = ctk.CTkLabel(optionFrame, text='Appearance Mode:')
-        setColorBoxLabel.pack(side='bottom', padx=5, pady=5)
-
-    def on_enter_pressed(self, junk):
+    def on_enter_pressed(self, keyInfo):
         # Get Input from Entrybox
         userInput = self.userEntryBox.get()
 
@@ -62,6 +66,8 @@ class TeacherAssistant(ctk.CTk):
 
     def set_theme(self, theme):
         ctk.set_appearance_mode(theme)
+       
+            
 
     def placeTextOnFrame(self, input):
         print(input)
@@ -77,9 +83,48 @@ class TeacherAssistant(ctk.CTk):
         userInputTextBox.insert(ctk.END, f"{input}")
         userInputTextBox.configure(state='disabled')
 
+    # read contents of file and return it
+    def read_file_content(self, file_path):
+    
+        #Detects the file type (Word, PDF, or TXT) based on its extension and extracts its content. 
+        print("file path - ", file_path)
+        file_extension = os.path.splitext(file_path)[1].lower()
+
+        # Extract content from Word document
+        if file_extension == '.docx':
+            doc = Document(file_path)
+            fullText = []
+            for para in doc.paragraphs:
+                fullText.append(para.text)
+            return '\n'.join(fullText)
+
+        # Extract content from PDF
+        elif file_extension == '.pdf':
+            with open(file_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                text = ""
+                for page_num in range(len(reader.pages)):
+                    page = reader.pages[page_num]
+                    text += page.extract_text()
+            return text
+
+        # Extract content from a plain text file
+        elif file_extension == '.txt':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+
+        else:
+            raise ValueError("Unsupported file type: {}".format(file_extension))
+    
     def getAiAnswer(self):
         openai.api_key = "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"
         self.messages = []
+        
+        cwd = os.getcwd()
+        
+        trainingFolder = os.path.join(cwd, 'TestMaterial\\cop1000.pdf')
+        file_content = self.read_file_content(trainingFolder)
+        
         system_msg = """
         You are a specialized AI assistant for teachers, designed to support them in crafting assignments and addressing other potential educational needs based on the specific content and details found in a provided file. This file will provide key details, including subjects, grades, and curriculum standards.
 
@@ -97,6 +142,7 @@ class TeacherAssistant(ctk.CTk):
         """
 
         self.messages.append({"role": "system", "content": system_msg})
+        self.messages.append({"role": "user", "content": f"Here's the content of my file: \n{file_content}"})
         
         print("Getting API Answer for: ", self.userInput)
         print("Teacher assistant is ready!")

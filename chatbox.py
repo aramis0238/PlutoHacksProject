@@ -21,9 +21,9 @@ class TeacherAssistant(ctk.CTk):
         self.resizable(False, False)
 
         optionFrame = ctk.CTkFrame(self, width=20, height=650)
-        optionFrame.pack(side='left',anchor='w',fill="both", pady=5, padx=5)
+        optionFrame.pack(side='left',anchor='w',fill="both", pady=5, padx=7)
  
-        self.userEntryBox = ctk.CTkEntry(self, width=910)
+        self.userEntryBox = ctk.CTkEntry(self, width=860, placeholder_text='Enter Text Here!')
         self.userEntryBox.pack(side='bottom')
 
         self.userEntryBox.bind("<Return>", self.on_enter_pressed)
@@ -33,8 +33,11 @@ class TeacherAssistant(ctk.CTk):
 
         setColorBox = ctk.CTkOptionMenu(optionFrame, values=['Dark','Light'], width=40, height=20, command=self.set_theme)
         setColorBox.set('Dark')
-
         setColorBox.pack(side='bottom',padx=5, pady=5)
+
+        setColorBoxLabel = ctk.CTkLabel(optionFrame, text='Appearance Mode:')
+        setColorBoxLabel.pack(side='bottom', padx=5, pady=5)
+
 
     def on_enter_pressed(self, junk):
         # Get Input from Entrybox
@@ -55,27 +58,34 @@ class TeacherAssistant(ctk.CTk):
     def placeTextOnFrame(self, input):
         print(input)
         
-        # Assuming self is a tkinter window or frame
+        # 
         userInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         userInputFrame.pack(side='top', anchor='e')
 
         userInput = ctk.StringVar()
-        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=200, height=10)
+        userInputTextBox = ctk.CTkEntry(userInputFrame, textvariable=userInput, width=350, height=100)
         userInputTextBox.pack(anchor='center')
 
         # Set the text in the Entry widget to the input variable
         userInput.set(input)
         userInputTextBox.configure(state='disabled')
-
+        
 
 
     def placeAiTextOnFrame(self, aiText):
+        print(aiText)
+        
+        # 
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         aiInputFrame.pack(side='top', anchor='w')
 
-        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=200, height=150)
+        aiInput = ctk.StringVar()
+        aiInputTextBox = ctk.CTkEntry(aiInputFrame, textvariable=aiInput, width=350, height=100)
         aiInputTextBox.pack(anchor='center')
 
+        # Set the text in the Entry widget to the input variable
+        aiInput.set(aiText)
+        aiInputTextBox.configure(state='disabled')
 
 
     def getAiAnswer(self, userInput):
@@ -85,7 +95,7 @@ class TeacherAssistant(ctk.CTk):
         # Here will be the FastApi Configuration for ChatGPT
         #---------------------------------------------------
 
-        aiAnswer = 'Hello! this is the chatbot speaking...'
+        aiAnswer = 'Hello! This is the chatbot speaking...'
         self.placeAiTextOnFrame(aiAnswer)
 
 if __name__ == "__main__":

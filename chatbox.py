@@ -53,7 +53,7 @@ class TeacherAssistant(ctk.CTk):
         self.placeTextOnFrame(userInput)
 
         # Automatically Scroll to keep up with text
-        #self.chatBoxFrame.
+        #Placeholder for future code
 
         # Method used to get AI Answer from user prompt
         self.getAiAnswer(userInput)
@@ -91,8 +91,7 @@ class TeacherAssistant(ctk.CTk):
         aiInputFrame = ctk.CTkFrame(self.chatBoxFrame)
         aiInputFrame.pack(side='top', anchor='w')
 
-        aiInput = ctk.StringVar()
-        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, textvariable=aiInput, width=900, height=100)
+        aiInputTextBox = ctk.CTkTextbox(aiInputFrame, width=900, height=100)
         aiInputTextBox.pack(anchor='center', pady=5)   
         stop_dots = False
         
@@ -105,7 +104,7 @@ class TeacherAssistant(ctk.CTk):
             
             # Start the dot animation on a separate thread
             stop_dots = False
-            thread = threading.Thread(target=lambda:self.print_thinking_dots(aiInput))
+            thread = threading.Thread(target=lambda:self.print_thinking_dots(aiInputTextBox))
             thread.start()
             
             response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.messages)
@@ -119,10 +118,10 @@ class TeacherAssistant(ctk.CTk):
             i = 0
             for word in reply.split():
                 i += 1
-                aiInput.set(word + ' ')
+                aiInputTextBox.set(word + ' ')
                 print(word + ' ', end='')
                 if i == 40:
-                    aiInput.set('\n')
+                    aiInputTextBox.set('\n')
                     i = 0 
                 time.sleep(0.1)  # Reducing the delay for faster output
                 
